@@ -1,7 +1,7 @@
 {
-  "name": "ts-node-bootstrap",
+  "name": "value-exteactor",
   "version": "1.0.0",
-  "description": "A template repository for Node TypeScript projects",
+  "description": "",
   "main": "dist/main.js",
   "scripts": {
     "build": "rimraf ./dist && tsc",

@@ -1,6 +1,8 @@
-# ts-node-bootstrap
+# value-extractor
 
-A template repository for Node TypeScript projects. Includes TypeScript, Jest for testing, and Prettier for formatting. Configures TS and Jest with sensible, basic defaults; does not modify Prettier's preset formatting opinions. Has been tested with Node 16, 18, and 20.
+## Prompt
+
+> The objective of the exercise is to implement label and row extraction methods that run on standardized text output from a PDF. These are two of the earliest methods we implemented in the platform. Label finds a value adjacent to an anchor line (some static line of text in the document), and row finds a value at approximately the same vertical position as the anchor line. I've attached a text file with sample input and output, a types file specifying the relevant types for the exercise, a redacted source PDF, and its text (in StandardizedText format, with the redacted pieces changed from their originals). A bonus challenge would be to expand the label method to capture multiline values, like under the pickup notes anchor in the PDF.
 
 ## Scripts
 
@@ -12,18 +14,3 @@ A template repository for Node TypeScript projects. Includes TypeScript, Jest fo
 | `npm run test`       | runs the test files in the project                                                                                                                    |
 | `npm run test:watch` | runs the test files in the project and watches for changes; reruns tests on changes                                                                   |
 | `npm run fix`        | runs the Prettier formatter on the project, writes formatting changes to files                                                                        |
-
-## Extra Bits
-
-Includes a GitHub Actions workflow to confirm the basics are working; you will likely want to delete or edit this directory to suit your own needs.
-
-## Resources
-
-Documentation for options you may want to change:
-
-- [`tsconfig` options](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html)
-- [Jest CLI options](https://jestjs.io/docs/cli)
-- [Prettier config](https://prettier.io/docs/en/configuration.html)
-- [`.gitignore`-ing more things](https://github.com/github/gitignore/blob/main/Node.gitignore)
-- [`concurrently` CLI options](https://www.npmjs.com/package/concurrently)
-- [`nodemon` CLI options](https://www.npmjs.com/package/nodemon)
