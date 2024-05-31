@@ -4,6 +4,13 @@ import ValueExtractor from "./value-extractor";
 
 describe("Class: ValueExtractor", () => {
   const extractor = new ValueExtractor(sampleText);
+  const reversedSample = {
+    ...sampleText,
+    pages: sampleText.pages.map((page) => ({
+      lines: [...page.lines].reverse(),
+    })),
+  };
+  const reversedExtractor = new ValueExtractor(reversedSample);
 
   describe("Private method: getAnchorLine", () => {
     it("returns the matching line from the text and its page, if it exists", () => {
@@ -240,6 +247,65 @@ describe("Class: ValueExtractor", () => {
         expect(actual).toEqual(expected);
       });
     });
+
+    describe("Input: Anchor not in document", () => {
+      it("throws an error if the anchor text is not in the document", () => {
+        expect(() =>
+          extractor.extractLabel({
+            id: "label",
+            position: "below",
+            textAlignment: "left",
+            anchor: "purple platypus",
+          }),
+        ).toThrow("Anchor text not found");
+      });
+    });
+
+    describe("Text: No match", () => {
+      it("throws an error if there is no match for the criteria in the document", () => {
+        expect(() =>
+          extractor.extractLabel({
+            id: "label",
+            position: "above",
+            textAlignment: "left",
+            anchor: "Email freight-carrier@uber.com",
+          }),
+        ).toThrow("No match found for the requested anchor and position");
+      });
+    });
+
+    describe("Text: different order", () => {
+      it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
+        const actual = reversedExtractor.extractLabel({
+          id: "label",
+          position: "below",
+          textAlignment: "left",
+          anchor: "distance",
+        });
+        const expected = {
+          text: "733mi",
+          boundingPolygon: [
+            {
+              x: 2.005,
+              y: 4.413,
+            },
+            {
+              x: 2.374,
+              y: 4.413,
+            },
+            {
+              x: 2.374,
+              y: 4.541,
+            },
+            {
+              x: 2.005,
+              y: 4.541,
+            },
+          ],
+        };
+        expect(actual).toEqual(expected);
+      });
+    });
   });
 
   describe("Public method: extractRow", () => {
@@ -434,6 +500,65 @@ describe("Class: ValueExtractor", () => {
             {
               x: 0.943,
               y: 4.541,
+            },
+          ],
+        };
+        expect(actual).toEqual(expected);
+      });
+    });
+
+    describe("Input: Anchor not in document", () => {
+      it("throws an error if the anchor text is not in the document", () => {
+        expect(() =>
+          extractor.extractRow({
+            id: "row",
+            position: "right",
+            tiebreaker: "first",
+            anchor: "purple platypus",
+          }),
+        ).toThrow("Anchor text not found");
+      });
+    });
+
+    describe("Text: No match", () => {
+      it("throws an error if there is no match for the criteria in the document", () => {
+        expect(() =>
+          extractor.extractRow({
+            id: "row",
+            position: "right",
+            tiebreaker: "last",
+            anchor: "pallet",
+          }),
+        ).toThrow("No match found for the requested anchor and position");
+      });
+    });
+
+    describe("Text: different order", () => {
+      it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
+        const actual = reversedExtractor.extractRow({
+          id: "row",
+          position: "right",
+          tiebreaker: "first",
+          anchor: "line haul",
+        });
+        const expected = {
+          text: "$1770.00",
+          boundingPolygon: [
+            {
+              x: 6.765,
+              y: 1.994,
+            },
+            {
+              x: 7.315,
+              y: 1.994,
+            },
+            {
+              x: 7.315,
+              y: 2.122,
+            },
+            {
+              x: 6.765,
+              y: 2.122,
             },
           ],
         };
