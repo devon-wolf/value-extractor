@@ -9,18 +9,18 @@ const labelInput: Label = {
 	textAlignment: "left",
 	anchor: "distance",
 };
-const labelOutput = extractor.extractLabel(labelInput);
+const labelOutput = extractor.extractValue(labelInput);
 const rowInput: Row = {
 	id: "row",
 	position: "right",
 	tiebreaker: "first",
 	anchor: "line haul",
 };
-const rowOutput = extractor.extractRow(rowInput);
+const rowOutput = extractor.extractValue(rowInput);
 
 console.log(
-	`Value for label ${JSON.stringify(labelInput)}:\n${JSON.stringify(labelOutput, null, 2)}`,
+	`Value for label ${JSON.stringify(labelInput)}:\n${JSON.stringify(labelOutput, null, 2)}\n`,
 );
 console.log(
-	`Value for row ${JSON.stringify(rowInput)}:\n${JSON.stringify(rowOutput, null, 2)}`,
+	`Value for row ${JSON.stringify(rowInput)}:\n${JSON.stringify(rowOutput, null, 2)}\n`,
 );

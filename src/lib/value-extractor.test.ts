@@ -1,4 +1,4 @@
-import { describe, beforeEach, it, expect, jest } from "@jest/globals";
+import { describe, it, expect } from "@jest/globals";
 import * as sampleText from "../data/standardized_text.json";
 import ValueExtractor from "./value-extractor";
 
@@ -12,47 +12,10 @@ describe("Class: ValueExtractor", () => {
   };
   const reversedExtractor = new ValueExtractor(reversedSample);
 
-  describe("Private method: getAnchorLine", () => {
-    it("returns the matching line from the text and its page, if it exists", () => {
-      const actual = extractor["getAnchorLine"]("distance");
-      const expected = {
-        anchorLine: {
-          text: "Distance",
-          boundingPolygon: [
-            {
-              x: 2.005,
-              y: 4.224,
-            },
-            {
-              x: 2.438,
-              y: 4.224,
-            },
-            {
-              x: 2.438,
-              y: 4.328,
-            },
-            {
-              x: 2.005,
-              y: 4.328,
-            },
-          ],
-        },
-        page: 0,
-      };
-      expect(actual).toEqual(expected);
-    });
-
-    it("returns undefined properties if no match found", () => {
-      const actual = extractor["getAnchorLine"]("purple platypus");
-      const expected = { anchorLine: undefined, page: undefined };
-      expect(actual).toEqual(expected);
-    });
-  });
-
-  describe("Public method: extractLabel", () => {
+  describe("Feature: Extracting label values", () => {
     describe("Input: below left", () => {
       it("returns the closest line below and left of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "below",
           textAlignment: "left",
@@ -85,7 +48,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: above left", () => {
       it("returns the closest line above and left of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "above",
           textAlignment: "left",
@@ -118,7 +81,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: below right", () => {
       it("returns the closest line below and right of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "below",
           textAlignment: "right",
@@ -151,7 +114,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: above right", () => {
       it("returns the closest line above and right of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "above",
           textAlignment: "right",
@@ -184,7 +147,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: left [any]", () => {
       it("returns the closest line to the left of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "left",
           textAlignment: "left",
@@ -217,7 +180,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: right [any]", () => {
       it("returns the closest line to the right of the anchor", () => {
-        const actual = extractor.extractLabel({
+        const actual = extractor.extractValue({
           id: "label",
           position: "right",
           textAlignment: "right",
@@ -251,7 +214,7 @@ describe("Class: ValueExtractor", () => {
     describe("Input: Anchor not in document", () => {
       it("throws an error if the anchor text is not in the document", () => {
         expect(() =>
-          extractor.extractLabel({
+          extractor.extractValue({
             id: "label",
             position: "below",
             textAlignment: "left",
@@ -264,7 +227,7 @@ describe("Class: ValueExtractor", () => {
     describe("Text: No match", () => {
       it("throws an error if there is no match for the criteria in the document", () => {
         expect(() =>
-          extractor.extractLabel({
+          extractor.extractValue({
             id: "label",
             position: "above",
             textAlignment: "left",
@@ -276,7 +239,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Text: different order", () => {
       it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
-        const actual = reversedExtractor.extractLabel({
+        const actual = reversedExtractor.extractValue({
           id: "label",
           position: "below",
           textAlignment: "left",
@@ -308,10 +271,10 @@ describe("Class: ValueExtractor", () => {
     });
   });
 
-  describe("Public method: extractRow", () => {
+  describe("Feature: Extracting row values", () => {
     describe("Input: right first", () => {
       it("returns the first line to the right of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "right",
           tiebreaker: "first",
@@ -344,7 +307,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: left first", () => {
       it("returns the first line to the left of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "left",
           tiebreaker: "first",
@@ -377,7 +340,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: right second", () => {
       it("returns the second line to the right of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "right",
           tiebreaker: "second",
@@ -410,7 +373,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: left second", () => {
       it("returns the second line to the left of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "left",
           tiebreaker: "second",
@@ -443,7 +406,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: right last", () => {
       it("returns the last line to the right of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "right",
           tiebreaker: "last",
@@ -476,7 +439,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Input: left last", () => {
       it("returns the last line to the left of the anchor", () => {
-        const actual = extractor.extractRow({
+        const actual = extractor.extractValue({
           id: "row",
           position: "left",
           tiebreaker: "last",
@@ -510,7 +473,7 @@ describe("Class: ValueExtractor", () => {
     describe("Input: Anchor not in document", () => {
       it("throws an error if the anchor text is not in the document", () => {
         expect(() =>
-          extractor.extractRow({
+          extractor.extractValue({
             id: "row",
             position: "right",
             tiebreaker: "first",
@@ -523,7 +486,7 @@ describe("Class: ValueExtractor", () => {
     describe("Text: No match", () => {
       it("throws an error if there is no match for the criteria in the document", () => {
         expect(() =>
-          extractor.extractRow({
+          extractor.extractValue({
             id: "row",
             position: "right",
             tiebreaker: "last",
@@ -535,7 +498,7 @@ describe("Class: ValueExtractor", () => {
 
     describe("Text: different order", () => {
       it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
-        const actual = reversedExtractor.extractRow({
+        const actual = reversedExtractor.extractValue({
           id: "row",
           position: "right",
           tiebreaker: "first",
