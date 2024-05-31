@@ -6,36 +6,39 @@ describe("Class: ValueExtractor", () => {
   const extractor = new ValueExtractor(sampleText);
 
   describe("Private method: getAnchorLine", () => {
-    it("returns the matching line from the text if it exists", () => {
+    it("returns the matching line from the text and its page, if it exists", () => {
       const actual = extractor["getAnchorLine"]("distance");
       const expected = {
-        text: "Distance",
-        boundingPolygon: [
-          {
-            x: 2.005,
-            y: 4.224,
-          },
-          {
-            x: 2.438,
-            y: 4.224,
-          },
-          {
-            x: 2.438,
-            y: 4.328,
-          },
-          {
-            x: 2.005,
-            y: 4.328,
-          },
-        ],
+        anchorLine: {
+          text: "Distance",
+          boundingPolygon: [
+            {
+              x: 2.005,
+              y: 4.224,
+            },
+            {
+              x: 2.438,
+              y: 4.224,
+            },
+            {
+              x: 2.438,
+              y: 4.328,
+            },
+            {
+              x: 2.005,
+              y: 4.328,
+            },
+          ],
+        },
+        page: 0,
       };
       expect(actual).toEqual(expected);
     });
 
-    it("throws an error if a match is not found", () => {
-      expect(() => extractor["getAnchorLine"]("purple platypus")).toThrow(
-        "Anchor text not found",
-      );
+    it("returns undefined properties if no match found", () => {
+      const actual = extractor["getAnchorLine"]("purple platypus");
+      const expected = { anchorLine: undefined, page: undefined };
+      expect(actual).toEqual(expected);
     });
   });
 
@@ -171,6 +174,72 @@ describe("Class: ValueExtractor", () => {
         expect(actual).toEqual(expected);
       });
     });
+
+    describe("Input: left [any]", () => {
+      it("returns the closest line to the left of the anchor", () => {
+        const actual = extractor.extractLabel({
+          id: "label",
+          position: "left",
+          textAlignment: "left",
+          anchor: "dot number",
+        });
+        const expected = {
+          text: "MC number",
+          boundingPolygon: [
+            {
+              x: 3.832,
+              y: 1.482,
+            },
+            {
+              x: 4.411,
+              y: 1.482,
+            },
+            {
+              x: 4.411,
+              y: 1.586,
+            },
+            {
+              x: 3.832,
+              y: 1.586,
+            },
+          ],
+        };
+        expect(actual).toEqual(expected);
+      });
+    });
+
+    describe("Input: right [any]", () => {
+      it("returns the closest line to the right of the anchor", () => {
+        const actual = extractor.extractLabel({
+          id: "label",
+          position: "right",
+          textAlignment: "right",
+          anchor: "dispatch phone calls",
+        });
+        const expected = {
+          text: "Reefer Requirements (for reefer shipments only)",
+          boundingPolygon: [
+            {
+              x: 4.13,
+              y: 3.368,
+            },
+            {
+              x: 6.231,
+              y: 3.368,
+            },
+            {
+              x: 6.231,
+              y: 3.458,
+            },
+            {
+              x: 4.13,
+              y: 3.458,
+            },
+          ],
+        };
+        expect(actual).toEqual(expected);
+      });
+    });
   });
 
   describe("Public method: extractRow", () => {
@@ -213,26 +282,26 @@ describe("Class: ValueExtractor", () => {
           id: "row",
           position: "left",
           tiebreaker: "first",
-          anchor: "price breakdown",
+          anchor: "packaging",
         });
         const expected = {
-          text: "Rate confirmation",
+          text: "Cargo Value",
           boundingPolygon: [
             {
-              x: 0.943,
-              y: 1.599,
+              x: 5.189,
+              y: 4.224,
             },
             {
-              x: 2.155,
-              y: 1.599,
+              x: 5.785,
+              y: 4.224,
             },
             {
-              x: 2.155,
-              y: 1.754,
+              x: 5.785,
+              y: 4.328,
             },
             {
-              x: 0.943,
-              y: 1.754,
+              x: 5.189,
+              y: 4.328,
             },
           ],
         };
