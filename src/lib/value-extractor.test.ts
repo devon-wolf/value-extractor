@@ -1,5 +1,13 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import * as sampleText from "../data/standardized_text.json";
+import {
+  HorizontalDirection,
+  IdType,
+  Label,
+  Row,
+  Tiebreaker,
+  VerticalDirection,
+} from "./types";
 import ValueExtractor from "./value-extractor";
 
 describe("Class: ValueExtractor", () => {
@@ -12,13 +20,72 @@ describe("Class: ValueExtractor", () => {
   };
   const reversedExtractor = new ValueExtractor(reversedSample);
 
+  describe("Handling bad input", () => {
+    it("throws an error if input ID is not supported", () => {
+      expect(() =>
+        extractor.extractValue({
+          id: "column",
+          position: VerticalDirection.ABOVE,
+          textAlignment: HorizontalDirection.RIGHT,
+          anchor: "distance",
+        } as unknown as Label),
+      ).toThrow("ID must be of type 'label' or 'row'");
+    });
+
+    it("throws an error if label input position is not supported", () => {
+      expect(() =>
+        extractor.extractValue({
+          id: IdType.LABEL,
+          position: "lower",
+          textAlignment: HorizontalDirection.LEFT,
+          anchor: "distance",
+        } as unknown as Label),
+      ).toThrow(
+        "Position for label type must be 'above', 'below', 'left', or 'right'",
+      );
+    });
+
+    it("throws an error if row input position is not supported", () => {
+      expect(() => {
+        extractor.extractValue({
+          id: IdType.ROW,
+          position: "east",
+          tiebreaker: Tiebreaker.FIRST,
+          anchor: "distance",
+        } as unknown as Row);
+      }).toThrow("Position for row type must be 'left' or 'right'");
+    });
+
+    it("throws an error if label textAlignment is not supported", () => {
+      expect(() =>
+        extractor.extractValue({
+          id: IdType.LABEL,
+          position: VerticalDirection.ABOVE,
+          textAlignment: "justified",
+          anchor: "distance",
+        } as unknown as Label),
+      ).toThrow("Text alignment must be 'left', or 'right'");
+    });
+
+    it("throws an error if row tiebreaker is not supported", () => {
+      expect(() => {
+        extractor.extractValue({
+          id: IdType.ROW,
+          position: HorizontalDirection.RIGHT,
+          tiebreaker: "third",
+          anchor: "distance",
+        } as unknown as Row);
+      }).toThrow("Tiebreaker must be 'first', 'second', or 'last'");
+    });
+  });
+
   describe("Feature: Extracting label values", () => {
     describe("Input: below left", () => {
       it("returns the closest line below and left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "below",
-          textAlignment: "left",
+          id: IdType.LABEL,
+          position: VerticalDirection.BELOW,
+          textAlignment: HorizontalDirection.LEFT,
           anchor: "distance",
         });
         const expected = {
@@ -49,9 +116,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: above left", () => {
       it("returns the closest line above and left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "above",
-          textAlignment: "left",
+          id: IdType.LABEL,
+          position: VerticalDirection.ABOVE,
+          textAlignment: HorizontalDirection.LEFT,
           anchor: "19,748lbs",
         });
         const expected = {
@@ -82,9 +149,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: below right", () => {
       it("returns the closest line below and right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "below",
-          textAlignment: "right",
+          id: IdType.LABEL,
+          position: VerticalDirection.BELOW,
+          textAlignment: HorizontalDirection.RIGHT,
           anchor: "cargo value",
         });
         const expected = {
@@ -115,9 +182,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: above right", () => {
       it("returns the closest line above and right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "above",
-          textAlignment: "right",
+          id: IdType.LABEL,
+          position: VerticalDirection.ABOVE,
+          textAlignment: HorizontalDirection.RIGHT,
           anchor: "wire",
         });
         const expected = {
@@ -148,9 +215,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: left [any]", () => {
       it("returns the closest line to the left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "left",
-          textAlignment: "left",
+          id: IdType.LABEL,
+          position: HorizontalDirection.LEFT,
+          textAlignment: HorizontalDirection.LEFT,
           anchor: "dot number",
         });
         const expected = {
@@ -181,9 +248,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: right [any]", () => {
       it("returns the closest line to the right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "label",
-          position: "right",
-          textAlignment: "right",
+          id: IdType.LABEL,
+          position: HorizontalDirection.RIGHT,
+          textAlignment: HorizontalDirection.RIGHT,
           anchor: "dispatch phone calls",
         });
         const expected = {
@@ -215,9 +282,9 @@ describe("Class: ValueExtractor", () => {
       it("throws an error if the anchor text is not in the document", () => {
         expect(() =>
           extractor.extractValue({
-            id: "label",
-            position: "below",
-            textAlignment: "left",
+            id: IdType.LABEL,
+            position: VerticalDirection.BELOW,
+            textAlignment: HorizontalDirection.LEFT,
             anchor: "purple platypus",
           }),
         ).toThrow("Anchor text not found");
@@ -228,9 +295,9 @@ describe("Class: ValueExtractor", () => {
       it("throws an error if there is no match for the criteria in the document", () => {
         expect(() =>
           extractor.extractValue({
-            id: "label",
-            position: "above",
-            textAlignment: "left",
+            id: IdType.LABEL,
+            position: VerticalDirection.ABOVE,
+            textAlignment: HorizontalDirection.LEFT,
             anchor: "Email freight-carrier@uber.com",
           }),
         ).toThrow("No match found for the requested anchor and position");
@@ -240,9 +307,9 @@ describe("Class: ValueExtractor", () => {
     describe("Text: different order", () => {
       it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
         const actual = reversedExtractor.extractValue({
-          id: "label",
-          position: "below",
-          textAlignment: "left",
+          id: IdType.LABEL,
+          position: VerticalDirection.BELOW,
+          textAlignment: HorizontalDirection.LEFT,
           anchor: "distance",
         });
         const expected = {
@@ -275,9 +342,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: right first", () => {
       it("returns the first line to the right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "right",
-          tiebreaker: "first",
+          id: IdType.ROW,
+          position: HorizontalDirection.RIGHT,
+          tiebreaker: Tiebreaker.FIRST,
           anchor: "line haul",
         });
         const expected = {
@@ -308,9 +375,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: left first", () => {
       it("returns the first line to the left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "left",
-          tiebreaker: "first",
+          id: IdType.ROW,
+          position: HorizontalDirection.LEFT,
+          tiebreaker: Tiebreaker.FIRST,
           anchor: "packaging",
         });
         const expected = {
@@ -341,9 +408,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: right second", () => {
       it("returns the second line to the right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "right",
-          tiebreaker: "second",
+          id: IdType.ROW,
+          position: HorizontalDirection.RIGHT,
+          tiebreaker: Tiebreaker.SECOND,
           anchor: "19,748lbs",
         });
         const expected = {
@@ -374,9 +441,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: left second", () => {
       it("returns the second line to the left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "left",
-          tiebreaker: "second",
+          id: IdType.ROW,
+          position: HorizontalDirection.LEFT,
+          tiebreaker: Tiebreaker.SECOND,
           anchor: "pallet",
         });
         const expected = {
@@ -407,9 +474,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: right last", () => {
       it("returns the last line to the right of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "right",
-          tiebreaker: "last",
+          id: IdType.ROW,
+          position: HorizontalDirection.RIGHT,
+          tiebreaker: Tiebreaker.LAST,
           anchor: "733mi",
         });
         const expected = {
@@ -440,9 +507,9 @@ describe("Class: ValueExtractor", () => {
     describe("Input: left last", () => {
       it("returns the last line to the left of the anchor", () => {
         const actual = extractor.extractValue({
-          id: "row",
-          position: "left",
-          tiebreaker: "last",
+          id: IdType.ROW,
+          position: HorizontalDirection.LEFT,
+          tiebreaker: Tiebreaker.LAST,
           anchor: "$100000.00",
         });
         const expected = {
@@ -474,9 +541,9 @@ describe("Class: ValueExtractor", () => {
       it("throws an error if the anchor text is not in the document", () => {
         expect(() =>
           extractor.extractValue({
-            id: "row",
-            position: "right",
-            tiebreaker: "first",
+            id: IdType.ROW,
+            position: HorizontalDirection.RIGHT,
+            tiebreaker: Tiebreaker.FIRST,
             anchor: "purple platypus",
           }),
         ).toThrow("Anchor text not found");
@@ -487,9 +554,9 @@ describe("Class: ValueExtractor", () => {
       it("throws an error if there is no match for the criteria in the document", () => {
         expect(() =>
           extractor.extractValue({
-            id: "row",
-            position: "right",
-            tiebreaker: "last",
+            id: IdType.ROW,
+            position: HorizontalDirection.RIGHT,
+            tiebreaker: Tiebreaker.LAST,
             anchor: "pallet",
           }),
         ).toThrow("No match found for the requested anchor and position");
@@ -499,9 +566,9 @@ describe("Class: ValueExtractor", () => {
     describe("Text: different order", () => {
       it("does not rely on the order of the lines to return the closest line based on requested criteria", () => {
         const actual = reversedExtractor.extractValue({
-          id: "row",
-          position: "right",
-          tiebreaker: "first",
+          id: IdType.ROW,
+          position: HorizontalDirection.RIGHT,
+          tiebreaker: Tiebreaker.FIRST,
           anchor: "line haul",
         });
         const expected = {

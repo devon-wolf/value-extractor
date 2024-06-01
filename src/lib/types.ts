@@ -1,22 +1,41 @@
-export type HorizontalDirection = "right" | "left";
-export type VerticalDirection = "below" | "above";
+export enum HorizontalDirection {
+  RIGHT = "right",
+  LEFT = "left",
+}
+
+export enum VerticalDirection {
+  BELOW = "below",
+  ABOVE = "above",
+}
+
+export enum Tiebreaker {
+  FIRST = "first",
+  SECOND = "second",
+  LAST = "last",
+}
+
+export enum IdType {
+  LABEL = "label",
+  ROW = "row",
+}
+
 export type Direction = HorizontalDirection | VerticalDirection;
 
 export interface BaseMethod {
-  id: string;
+  id: IdType;
 }
 
 export interface Label extends BaseMethod {
-  id: "label";
+  id: IdType.LABEL;
   position: Direction;
   textAlignment: HorizontalDirection;
   anchor: string;
 }
 
 export interface Row extends BaseMethod {
-  id: "row";
+  id: IdType.ROW;
   position: HorizontalDirection;
-  tiebreaker: "first" | "second" | "last";
+  tiebreaker: Tiebreaker;
   anchor: string;
 }
 
@@ -34,13 +53,3 @@ export type StandardizedPage = {
 export type StandardizedText = {
   pages: StandardizedPage[];
 };
-
-export type LabelExtractor = (
-  configuration: Label,
-  text: StandardizedText,
-) => StandardizedLine;
-
-export type RowExtractor = (
-  configuration: Row,
-  text: StandardizedText,
-) => StandardizedLine;

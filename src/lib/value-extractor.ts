@@ -1,32 +1,53 @@
 import {
-  Direction,
+  NO_ANCHOR_ERROR,
+  NO_MATCH_ERROR,
+  UNSUPPORTED_ID_ERROR,
+  UNSUPPORTED_LABEL_POSITION,
+  UNSUPPORTED_ROW_POSITION,
+  UNSUPPORTED_TEXT_ALIGNMENT,
+  UNSUPPORTED_TIEBREAKER,
+} from "./constants";
+import {
+  alignsWithAnchor,
+  getAdjacentEdge,
+  getAnchorEdge,
+  isCloserToAnchorThanPrev,
+  isOnTargetSideOfAnchor,
+} from "./polygon-utils";
+import {
+  HorizontalDirection,
+  IdType,
   Label,
-  Polygon,
   Row,
   StandardizedLine,
   StandardizedText,
+  Tiebreaker,
+  VerticalDirection,
 } from "./types";
+
+const { FIRST, SECOND, LAST } = Tiebreaker;
+const { LABEL, ROW } = IdType;
 
 export default class ValueExtractor {
   private readonly text: StandardizedText;
-  private readonly NO_ANCHOR_ERROR: Error = new Error("Anchor text not found");
-  private readonly NO_MATCH_ERROR: Error = new Error(
-    "No match found for the requested anchor and position",
-  );
 
   constructor(text: StandardizedText) {
     this.text = text;
   }
 
   extractValue(configuration: Label | Row): StandardizedLine {
-    const { anchorLine, page } = this.getAnchorLine(configuration.anchor);
+    this.checkConfiguration(configuration);
+
+    const { anchorLine, page } = this.findAnchorLine(configuration.anchor);
     if (!anchorLine) {
-      throw this.NO_ANCHOR_ERROR;
+      throw new Error(NO_ANCHOR_ERROR);
     }
+
     const value = this.findValue(configuration, anchorLine, <number>page);
     if (!value) {
-      throw this.NO_MATCH_ERROR;
+      throw new Error(NO_MATCH_ERROR);
     }
+
     return value;
   }
 
@@ -35,26 +56,26 @@ export default class ValueExtractor {
     anchorLine: StandardizedLine,
     page: number,
   ): StandardizedLine | undefined {
-    const lines = this.getLinesOnRelevantSideOfAnchor(
+    const lines = this.getLinesOnTargetSideOfAnchor(
       anchorLine,
       configuration,
       page,
     );
 
     const tiebreaker =
-      configuration.id === "label" ? "first" : configuration.tiebreaker;
+      configuration.id === LABEL ? FIRST : configuration.tiebreaker;
 
     switch (tiebreaker) {
-      case "first":
+      case FIRST:
         return lines[0];
-      case "second":
+      case SECOND:
         return lines[1];
-      case "last":
+      case LAST:
         return lines[lines.length - 1];
     }
   }
 
-  private getAnchorLine(anchor: string): {
+  private findAnchorLine(anchor: string): {
     anchorLine: StandardizedLine | undefined;
     page: number | undefined;
   } {
@@ -75,7 +96,7 @@ export default class ValueExtractor {
     return { anchorLine, page };
   }
 
-  private getLinesOnRelevantSideOfAnchor(
+  private getLinesOnTargetSideOfAnchor(
     anchorLine: StandardizedLine,
     configuration: Label | Row,
     page: number,
@@ -83,27 +104,25 @@ export default class ValueExtractor {
     const { position } = configuration;
     return this.text.pages[page].lines.reduce(
       (lines, currentLine) => {
-        const lineEdge = this.getAdjacentEdge(
-          currentLine.boundingPolygon,
-          position,
-        );
+        const lineEdge = getAdjacentEdge(currentLine.boundingPolygon, position);
         if (
-          this.isOnTargetSideOfAnchor(
+          isOnTargetSideOfAnchor(
             lineEdge,
-            this.getAnchorEdge(anchorLine.boundingPolygon, position),
+            getAnchorEdge(anchorLine.boundingPolygon, position),
             position,
           ) &&
-          this.alignsWithAnchor(
+          alignsWithAnchor(
             currentLine.boundingPolygon,
-            anchorLine,
+            anchorLine.boundingPolygon,
             configuration,
           )
         ) {
+          const prev = lines[0];
           if (
-            lines[0] &&
-            this.isCloserToAnchorThanPrev(
-              lineEdge,
-              this.getAdjacentEdge(lines[0].boundingPolygon, position),
+            prev &&
+            isCloserToAnchorThanPrev(
+              currentLine.boundingPolygon,
+              prev.boundingPolygon,
               position,
             )
           ) {
@@ -118,128 +137,34 @@ export default class ValueExtractor {
     );
   }
 
-  private alignsWithAnchor(
-    polygon: Polygon,
-    anchorLine: StandardizedLine,
-    configuration: Label | Row,
-  ) {
-    if (
-      configuration.position === "above" ||
-      configuration.position === "below"
-    ) {
-      return this.alignsWithHorizontalAnchorPoint(
-        polygon,
-        this.getAnchorEdge(
-          anchorLine.boundingPolygon,
-          configuration.textAlignment,
-        ),
-      );
+  private checkConfiguration(configuration: Label | Row) {
+    const { id, position } = configuration;
+    const horizontalDirections = Object.values(HorizontalDirection);
+    const allDirections = [
+      ...Object.values(VerticalDirection),
+      ...horizontalDirections,
+    ];
+    const tiebreakers = Object.values(Tiebreaker);
+    const idTypes = Object.values(IdType);
+
+    if (!idTypes.includes(id)) {
+      throw new Error(UNSUPPORTED_ID_ERROR);
     }
-    return this.alignsVerticallyWithAnchor(polygon, anchorLine.boundingPolygon);
-  }
-
-  private alignsWithHorizontalAnchorPoint(
-    polygon: Polygon,
-    alignmentPoint: number,
-  ): boolean {
-    const polygonLeft = this.getLeftmostPoint(polygon);
-    const polygonRight = this.getRightmostPoint(polygon);
-    return alignmentPoint >= polygonLeft && alignmentPoint <= polygonRight;
-  }
-
-  private alignsVerticallyWithAnchor(
-    polygon: Polygon,
-    anchor: Polygon,
-  ): boolean {
-    const polygonTop = this.getTopPoint(polygon);
-    const polygonBottom = this.getBottomPoint(polygon);
-    const anchorTop = this.getTopPoint(anchor);
-    const anchorBottom = this.getBottomPoint(anchor);
-
-    const bottomBelowAnchorTop = polygonBottom >= anchorTop;
-    const topAboveAnchorBottom = polygonTop <= anchorBottom;
-    const topBelowAnchorTop = polygonTop >= anchorTop;
-    const bottomAboveAnchorBottom = polygonBottom <= anchorBottom;
-
-    return (
-      (topAboveAnchorBottom && topBelowAnchorTop) ||
-      (bottomBelowAnchorTop && bottomAboveAnchorBottom)
-    );
-  }
-
-  private isCloserToAnchorThanPrev(
-    currentEdge: number,
-    prevEdge: number,
-    position: Direction,
-  ): boolean {
-    switch (position) {
-      case "right":
-        return currentEdge < prevEdge;
-      case "left":
-        return currentEdge > prevEdge;
-      case "below":
-        return currentEdge < prevEdge;
-      case "above":
-        return currentEdge > prevEdge;
+    if (id === LABEL) {
+      if (!allDirections.includes(position)) {
+        throw new Error(UNSUPPORTED_LABEL_POSITION);
+      }
+      if (!horizontalDirections.includes(configuration.textAlignment)) {
+        throw new Error(UNSUPPORTED_TEXT_ALIGNMENT);
+      }
     }
-  }
-
-  private isOnTargetSideOfAnchor(
-    lineEdge: number,
-    anchorEdge: number,
-    position: Direction,
-  ): boolean {
-    switch (position) {
-      case "right":
-        return lineEdge >= anchorEdge;
-      case "left":
-        return lineEdge <= anchorEdge;
-      case "below":
-        return lineEdge >= anchorEdge;
-      case "above":
-        return lineEdge <= anchorEdge;
+    if (id === ROW) {
+      if (!horizontalDirections.includes(position)) {
+        throw new Error(UNSUPPORTED_ROW_POSITION);
+      }
+      if (!tiebreakers.includes(configuration.tiebreaker)) {
+        throw new Error(UNSUPPORTED_TIEBREAKER);
+      }
     }
-  }
-
-  private getAnchorEdge(polygon: Polygon, position: Direction): number {
-    switch (position) {
-      case "right":
-        return this.getRightmostPoint(polygon);
-      case "left":
-        return this.getLeftmostPoint(polygon);
-      case "below":
-        return this.getBottomPoint(polygon);
-      case "above":
-        return this.getTopPoint(polygon);
-    }
-  }
-
-  private getAdjacentEdge(polygon: Polygon, position: Direction): number {
-    switch (position) {
-      case "right":
-        return this.getLeftmostPoint(polygon);
-      case "left":
-        return this.getRightmostPoint(polygon);
-      case "below":
-        return this.getTopPoint(polygon);
-      case "above":
-        return this.getBottomPoint(polygon);
-    }
-  }
-
-  private getRightmostPoint(polygon: Polygon): number {
-    return Math.max(polygon[1].x, polygon[2].x);
-  }
-
-  private getLeftmostPoint(polygon: Polygon): number {
-    return Math.min(polygon[0].x, polygon[3].x);
-  }
-
-  private getTopPoint(polygon: Polygon): number {
-    return Math.min(polygon[0].y, polygon[1].y);
-  }
-
-  private getBottomPoint(polygon: Polygon): number {
-    return Math.max(polygon[3].y, polygon[2].y);
   }
 }

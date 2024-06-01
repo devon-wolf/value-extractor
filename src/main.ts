@@ -1,19 +1,31 @@
-import ValueExtractor from "./lib/value-extractor";
 import * as sampleText from "./data/standardized_text.json";
-import { Label, Row } from "./lib/types";
+import {
+	HorizontalDirection,
+	IdType,
+	Label,
+	Row,
+	Tiebreaker,
+	VerticalDirection,
+} from "./lib/types";
+import ValueExtractor from "./lib/value-extractor";
+
+const { LABEL, ROW } = IdType;
+const { RIGHT, LEFT } = HorizontalDirection;
+const { BELOW } = VerticalDirection;
+const { FIRST } = Tiebreaker;
 
 const extractor = new ValueExtractor(sampleText);
 const labelInput: Label = {
-	id: "label",
-	position: "below",
-	textAlignment: "left",
+	id: LABEL,
+	position: BELOW,
+	textAlignment: LEFT,
 	anchor: "distance",
 };
 const labelOutput = extractor.extractValue(labelInput);
 const rowInput: Row = {
-	id: "row",
-	position: "right",
-	tiebreaker: "first",
+	id: ROW,
+	position: RIGHT,
+	tiebreaker: FIRST,
 	anchor: "line haul",
 };
 const rowOutput = extractor.extractValue(rowInput);
