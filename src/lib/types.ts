@@ -42,6 +42,7 @@ export interface Label extends BaseMethod {
   position: Direction;
   textAlignment: HorizontalDirection;
   anchor: string;
+  multiline?: boolean;
 }
 
 export interface Row extends BaseMethod {

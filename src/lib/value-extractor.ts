@@ -82,14 +82,31 @@ export default class ValueExtractor {
     anchorLine: StandardizedLine,
     page: number,
   ): StandardizedLine | undefined {
+    const { id, position } = configuration;
+
     const lines = this.getLinesOnTargetSideOfAnchor(
       anchorLine,
       configuration,
       page,
     );
 
-    const tiebreaker =
-      configuration.id === LABEL ? FIRST : configuration.tiebreaker;
+    if (id === LABEL && configuration.multiline) {
+      lines.sort((lineA, lineB) => {
+        return isCloserToAnchorThanPrev(
+          getAdjacentEdge(lineA.boundingPolygon, position),
+          getAdjacentEdge(lineB.boundingPolygon, position),
+          configuration.position,
+        )
+          ? -1
+          : 1;
+      });
+      // TODO: start grabbing lines from the array in order
+      // TODO: determine how to know when to stop getting lines
+      // TODO: combine text from all lines into a single line, set the boundingPolygon to the outside edges of its component lines
+      // TODO: return combined lines
+    }
+
+    const tiebreaker = id === LABEL ? FIRST : configuration.tiebreaker;
 
     switch (tiebreaker) {
       case FIRST:

@@ -233,6 +233,41 @@ describe("Class: ValueExtractor", () => {
       });
     });
 
+    describe("Input: Multiline", () => {
+      it("returns the closest multiline group to the requested side of the anchor", () => {
+        const actual = extractor.extractValue({
+          id: LABEL,
+          position: BELOW,
+          textAlignment: LEFT,
+          anchor: "pickup notes",
+          multiline: true,
+        });
+        const expected = [
+          {
+            anchor: {
+              text: "Pickup Notes",
+              boundingPolygon: [
+                { x: 4.293, y: 6.216 },
+                { x: 4.94, y: 6.216 },
+                { x: 4.94, y: 6.32 },
+                { x: 4.293, y: 6.32 },
+              ],
+            },
+            value: {
+              text: '"TRACKING - The driver must be EASY to contact or active on the Uber Freight app at all times during the transit of this load, in order to provide updates to the tracking team."',
+              boundingPolygon: [
+                { x: 4.293, y: 6.408 },
+                { x: 7.295, y: 6.408 },
+                { x: 7.295, y: 6.869 },
+                { x: 4.293, y: 6.869 },
+              ],
+            },
+          },
+        ];
+        expect(actual).toEqual(expected);
+      });
+    });
+
     describe("Input: Anchor not in document", () => {
       it("returns an empty array if the anchor text is not in the document", () => {
         const actual = extractor.extractValue({
