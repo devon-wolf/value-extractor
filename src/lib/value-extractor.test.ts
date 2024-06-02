@@ -13,6 +13,7 @@ import {
   ROW,
   Row,
   SECOND,
+  StandardizedLine,
 } from "./types";
 import ValueExtractor from "./value-extractor";
 
@@ -226,28 +227,28 @@ describe("Class: ValueExtractor", () => {
     });
 
     describe("Input: Anchor not in document", () => {
-      it("throws an error if the anchor text is not in the document", () => {
-        expect(() =>
-          extractor.extractValue({
-            id: LABEL,
-            position: BELOW,
-            textAlignment: LEFT,
-            anchor: "purple platypus",
-          }),
-        ).toThrow("Anchor text not found");
+      it("returns an empty array if the anchor text is not in the document", () => {
+        const actual = extractor.extractValue({
+          id: LABEL,
+          position: BELOW,
+          textAlignment: LEFT,
+          anchor: "purple platypus",
+        });
+        const expected: StandardizedLine[] = [];
+        expect(actual).toEqual(expected);
       });
     });
 
     describe("Text: No match", () => {
-      it("throws an error if there is no match for the criteria in the document", () => {
-        expect(() =>
-          extractor.extractValue({
-            id: LABEL,
-            position: ABOVE,
-            textAlignment: LEFT,
-            anchor: "Email freight-carrier@uber.com",
-          }),
-        ).toThrow("No match found for the requested anchor and position");
+      it("returns an empty array if there is no match for the criteria in the document", () => {
+        const actual = extractor.extractValue({
+          id: LABEL,
+          position: ABOVE,
+          textAlignment: LEFT,
+          anchor: "Email freight-carrier@uber.com",
+        });
+        const expected: StandardizedLine[] = [];
+        expect(actual).toEqual(expected);
       });
     });
 
@@ -492,28 +493,28 @@ describe("Class: ValueExtractor", () => {
     });
 
     describe("Input: Anchor not in document", () => {
-      it("throws an error if the anchor text is not in the document", () => {
-        expect(() =>
-          extractor.extractValue({
-            id: ROW,
-            position: RIGHT,
-            tiebreaker: FIRST,
-            anchor: "purple platypus",
-          }),
-        ).toThrow("Anchor text not found");
+      it("returns an empty array if the anchor text is not in the document", () => {
+        const actual = extractor.extractValue({
+          id: ROW,
+          position: RIGHT,
+          tiebreaker: FIRST,
+          anchor: "purple platypus",
+        });
+        const expected: StandardizedLine[] = [];
+        expect(actual).toEqual(expected);
       });
     });
 
     describe("Text: No match", () => {
-      it("throws an error if there is no match for the criteria in the document", () => {
-        expect(() =>
-          extractor.extractValue({
-            id: ROW,
-            position: RIGHT,
-            tiebreaker: LAST,
-            anchor: "pallet",
-          }),
-        ).toThrow("No match found for the requested anchor and position");
+      it("returns an empty array if there is no match for the criteria in the document", () => {
+        const actual = extractor.extractValue({
+          id: ROW,
+          position: RIGHT,
+          tiebreaker: LAST,
+          anchor: "pallet",
+        });
+        const expected: StandardizedLine[] = [];
+        expect(actual).toEqual(expected);
       });
     });
 

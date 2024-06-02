@@ -1,6 +1,4 @@
 import {
-  NO_ANCHOR_ERROR,
-  NO_MATCH_ERROR,
   UNSUPPORTED_ID_ERROR,
   UNSUPPORTED_LABEL_POSITION,
   UNSUPPORTED_ROW_POSITION,
@@ -51,7 +49,7 @@ export default class ValueExtractor {
     );
 
     if (!anchorMatches) {
-      throw new Error(NO_ANCHOR_ERROR);
+      return [];
     }
 
     const values = anchorMatches.reduce(
@@ -62,10 +60,6 @@ export default class ValueExtractor {
       },
       <ExtractedValue[]>[],
     );
-
-    if (values.length === 0) {
-      throw new Error(NO_MATCH_ERROR);
-    }
 
     return values;
   }
