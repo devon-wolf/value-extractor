@@ -72,13 +72,16 @@ There is also a suite of basic tests covering the many possible combinations of 
 I have made several assumptions that are reflected in the design of the code:
 
 - That I could not rely on the order that lines would appear in a `StandardizedPage`. It might actually be reasonable to assume several things about the order of the lines in a page object, but without more knowledge about how those objects are produced I would not feel comfortable relying on specific patterns I saw in the order.
-  - If, in fact, the order can be relied on, some of the match search times can potentially be cut down, since I would be able to target only the portion of the array on the desired side of the anchor (though I did not confirm this).
+  - If, in fact, the order can be relied on, the match search and sort times can potentially be cut down, since I would be able to target only the portion of the array on the desired side of the anchor (though I did not confirm this).
 - That there may be multiple instances of an anchor in the text, and that each should be returned.
   - This led to changing the signature of the output from a single `StandardizedLine` to an array of anchors and their matching lines. I also assumed it would be valuable to know the position of which anchor belonged to which value.
-- That an error should be thrown if an anchor does not appear in the text, or if there are no matches for the anchor.
+- That an empty array should be returned if an anchor does not appear in the text, or if there are no matches for the anchor.
 - That the polygons are all quadrilaterals but are not _necessarily_ rectangles.
-  - Realistically, all the polygons in the sample are rectangles, and as such there are probably some rectangle-related assumptions that have snuck into the code since I did not have other shapes to test against.
+  - Realistically, all the polygons in the sample are rectangles, and as such there are probably some rectangle-related assumptions that have snuck into the code since I did not test against other shapes.
   - If they are in fact always rectangles, that may open opportunities for simplification.
+- That the polygon coordinate arrays will always follow the pattern `[top left, top right, bottom right, bottom left]`.
+- That polygon alignment is not always exact; I have set the `above` and `below` alignments to check if a line intersects the same X value as the anchor's `textAlignment` side, and I have set `left` and `right` to check whether a line's Y range intersects the anchor's Y range.
+  - If precise alignment can be relied on, there are likely opportunities to simplify these checks.
 
 ## Feature Considerations
 

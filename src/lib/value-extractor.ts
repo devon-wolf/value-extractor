@@ -31,10 +31,7 @@ import {
 
 export default class ValueExtractor {
   private readonly text: StandardizedText;
-  private readonly anchorIndex: Map<
-    string,
-    { line: StandardizedLine; page: number }[]
-  >;
+  private readonly anchorIndex: Map<string, AnchorMapEntry[]>;
 
   constructor(text: StandardizedText) {
     this.text = text;
@@ -166,6 +163,9 @@ export default class ValueExtractor {
         ) {
           // this line is the new second closest, shifts rest to the right
           lines.splice(1, 0, currentLine);
+        } else {
+          // this line is not in a target position; splice it in at a non-target index
+          lines.splice(lines.length - 1, 0, currentLine);
         }
       }
     }

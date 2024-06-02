@@ -2,6 +2,13 @@ import { describe, expect, it } from "@jest/globals";
 import * as sampleText from "../data/standardized_text.json";
 import * as shuffledSample from "../data/test/shuffled_text.json";
 import {
+  UNSUPPORTED_ID_ERROR,
+  UNSUPPORTED_LABEL_POSITION,
+  UNSUPPORTED_ROW_POSITION,
+  UNSUPPORTED_TEXT_ALIGNMENT,
+  UNSUPPORTED_TIEBREAKER,
+} from "./constants";
+import {
   ABOVE,
   BELOW,
   FIRST,
@@ -562,7 +569,7 @@ describe("Class: ValueExtractor", () => {
           textAlignment: RIGHT,
           anchor: "distance",
         } as unknown as Label),
-      ).toThrow("ID must be of type 'label' or 'row'");
+      ).toThrow(UNSUPPORTED_ID_ERROR);
     });
 
     it("throws an error if label input position is not supported", () => {
@@ -573,9 +580,7 @@ describe("Class: ValueExtractor", () => {
           textAlignment: LEFT,
           anchor: "distance",
         } as unknown as Label),
-      ).toThrow(
-        "Position for label type must be 'above', 'below', 'left', or 'right'",
-      );
+      ).toThrow(UNSUPPORTED_LABEL_POSITION);
     });
 
     it("throws an error if row input position is not supported", () => {
@@ -586,7 +591,7 @@ describe("Class: ValueExtractor", () => {
           tiebreaker: FIRST,
           anchor: "distance",
         } as unknown as Row);
-      }).toThrow("Position for row type must be 'left' or 'right'");
+      }).toThrow(UNSUPPORTED_ROW_POSITION);
     });
 
     it("throws an error if label textAlignment is not supported", () => {
@@ -597,7 +602,7 @@ describe("Class: ValueExtractor", () => {
           textAlignment: "justified",
           anchor: "distance",
         } as unknown as Label),
-      ).toThrow("Text alignment must be 'left', or 'right'");
+      ).toThrow(UNSUPPORTED_TEXT_ALIGNMENT);
     });
 
     it("throws an error if row tiebreaker is not supported", () => {
@@ -608,7 +613,7 @@ describe("Class: ValueExtractor", () => {
           tiebreaker: "third",
           anchor: "distance",
         } as unknown as Row);
-      }).toThrow("Tiebreaker must be 'first', 'second', or 'last'");
+      }).toThrow(UNSUPPORTED_TIEBREAKER);
     });
   });
 });
