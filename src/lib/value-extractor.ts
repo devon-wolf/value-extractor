@@ -8,47 +8,82 @@ import {
   UNSUPPORTED_TIEBREAKER,
 } from "./constants";
 import {
-  alignsWithAnchor,
   getAdjacentEdge,
-  getAnchorEdge,
   isCloserToAnchorThanPrev,
-  isOnTargetSideOfAnchor,
+  isInTargetRange,
 } from "./polygon-utils";
 import {
-  HorizontalDirection,
-  IdType,
+  AnchorMapEntry,
+  Direction,
+  ExtractedValue,
+  FIRST,
+  LABEL,
+  LAST,
   Label,
+  ROW,
   Row,
+  SECOND,
   StandardizedLine,
   StandardizedText,
-  Tiebreaker,
-  VerticalDirection,
+  allDirections,
+  horizontalDirections,
+  idTypes,
+  tiebreakers,
 } from "./types";
-
-const { FIRST, SECOND, LAST } = Tiebreaker;
-const { LABEL, ROW } = IdType;
 
 export default class ValueExtractor {
   private readonly text: StandardizedText;
+  private readonly anchorIndex: Map<
+    string,
+    { line: StandardizedLine; page: number }[]
+  >;
 
   constructor(text: StandardizedText) {
     this.text = text;
+    this.anchorIndex = this.buildAnchorIndex();
   }
 
-  extractValue(configuration: Label | Row): StandardizedLine {
+  extractValue(configuration: Label | Row): ExtractedValue[] {
     this.checkConfiguration(configuration);
 
-    const { anchorLine, page } = this.findAnchorLine(configuration.anchor);
-    if (!anchorLine) {
+    const anchorMatches = this.anchorIndex.get(
+      configuration.anchor.trim().toLowerCase(),
+    );
+
+    if (!anchorMatches) {
       throw new Error(NO_ANCHOR_ERROR);
     }
 
-    const value = this.findValue(configuration, anchorLine, <number>page);
-    if (!value) {
+    const values = anchorMatches.reduce(
+      (acc, anchor) => {
+        const value = this.findValue(configuration, anchor.line, anchor.page);
+        value && acc.push({ anchor: anchor.line, value });
+        return acc;
+      },
+      <ExtractedValue[]>[],
+    );
+
+    if (values.length === 0) {
       throw new Error(NO_MATCH_ERROR);
     }
 
-    return value;
+    return values;
+  }
+
+  private buildAnchorIndex(): Map<string, AnchorMapEntry[]> {
+    const index = new Map();
+    this.text.pages.forEach((page, pageIdx) => {
+      page.lines.forEach((line) => {
+        const trimmedText = line.text.trim().toLowerCase();
+        const entry = index.get(trimmedText);
+        if (entry) {
+          entry.push({ line, page: pageIdx });
+        } else {
+          index.set(trimmedText, [{ line, page: pageIdx }]);
+        }
+      });
+    });
+    return index;
   }
 
   private findValue(
@@ -75,61 +110,23 @@ export default class ValueExtractor {
     }
   }
 
-  private findAnchorLine(anchor: string): {
-    anchorLine: StandardizedLine | undefined;
-    page: number | undefined;
-  } {
-    let anchorLine: StandardizedLine | undefined;
-    let page: number | undefined;
-
-    for (let i = 0; i < this.text.pages.length; i++) {
-      anchorLine = this.text.pages[i].lines.find(
-        (line) =>
-          line.text.trim().toLowerCase() === anchor.trim().toLowerCase(),
-      );
-      if (anchorLine) {
-        page = i;
-        break;
-      }
-    }
-
-    return { anchorLine, page };
-  }
-
   private getLinesOnTargetSideOfAnchor(
     anchorLine: StandardizedLine,
     configuration: Label | Row,
     page: number,
   ): StandardizedLine[] {
     const { position } = configuration;
+
     return this.text.pages[page].lines.reduce(
       (lines, currentLine) => {
-        const lineEdge = getAdjacentEdge(currentLine.boundingPolygon, position);
         if (
-          isOnTargetSideOfAnchor(
-            lineEdge,
-            getAnchorEdge(anchorLine.boundingPolygon, position),
-            position,
-          ) &&
-          alignsWithAnchor(
+          isInTargetRange(
             currentLine.boundingPolygon,
             anchorLine.boundingPolygon,
             configuration,
           )
         ) {
-          const prev = lines[0];
-          if (
-            prev &&
-            isCloserToAnchorThanPrev(
-              currentLine.boundingPolygon,
-              prev.boundingPolygon,
-              position,
-            )
-          ) {
-            lines.unshift(currentLine);
-          } else {
-            lines.push(currentLine);
-          }
+          this.updateTargetLines(lines, currentLine, position);
         }
         return lines;
       },
@@ -137,15 +134,51 @@ export default class ValueExtractor {
     );
   }
 
+  private updateTargetLines(
+    lines: StandardizedLine[],
+    currentLine: StandardizedLine,
+    position: Direction,
+  ): void {
+    // do a partial sort to determine whether the current line should be in any of the targeted positions (first, second, last)
+    const lineEdge = getAdjacentEdge(currentLine.boundingPolygon, position);
+    if (lines.length === 0) {
+      // this is the first pass, push the line into the empty array
+      lines.push(currentLine);
+    } else {
+      const currentClosestEdge = getAdjacentEdge(
+        lines[0].boundingPolygon,
+        position,
+      );
+      const currentFarthestEdge = getAdjacentEdge(
+        lines[lines.length - 1].boundingPolygon,
+        position,
+      );
+
+      if (isCloserToAnchorThanPrev(lineEdge, currentClosestEdge, position)) {
+        // this line is the new closest
+        lines.unshift(currentLine);
+      } else if (
+        !isCloserToAnchorThanPrev(lineEdge, currentFarthestEdge, position)
+      ) {
+        // this line is the new farthest
+        lines.push(currentLine);
+      } else if (lines.length > 1) {
+        const currentSecondClosestEdge = getAdjacentEdge(
+          lines[1].boundingPolygon,
+          position,
+        );
+        if (
+          isCloserToAnchorThanPrev(lineEdge, currentSecondClosestEdge, position)
+        ) {
+          // this line is the new second closest, shifts rest to the right
+          lines.splice(1, 0, currentLine);
+        }
+      }
+    }
+  }
+
   private checkConfiguration(configuration: Label | Row) {
     const { id, position } = configuration;
-    const horizontalDirections = Object.values(HorizontalDirection);
-    const allDirections = [
-      ...Object.values(VerticalDirection),
-      ...horizontalDirections,
-    ];
-    const tiebreakers = Object.values(Tiebreaker);
-    const idTypes = Object.values(IdType);
 
     if (!idTypes.includes(id)) {
       throw new Error(UNSUPPORTED_ID_ERROR);

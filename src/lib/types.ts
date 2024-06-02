@@ -19,6 +19,18 @@ export enum IdType {
   ROW = "row",
 }
 
+export const { FIRST, SECOND, LAST } = Tiebreaker;
+export const { LABEL, ROW } = IdType;
+export const { RIGHT, LEFT } = HorizontalDirection;
+export const { ABOVE, BELOW } = VerticalDirection;
+export const horizontalDirections = Object.values(HorizontalDirection);
+export const allDirections = [
+  ...Object.values(VerticalDirection),
+  ...horizontalDirections,
+];
+export const tiebreakers = Object.values(Tiebreaker);
+export const idTypes = Object.values(IdType);
+
 export type Direction = HorizontalDirection | VerticalDirection;
 
 export interface BaseMethod {
@@ -52,4 +64,14 @@ export type StandardizedPage = {
 
 export type StandardizedText = {
   pages: StandardizedPage[];
+};
+
+export type AnchorMapEntry = {
+  line: StandardizedLine;
+  page: number;
+};
+
+export type ExtractedValue = {
+  anchor: StandardizedLine;
+  value: StandardizedLine;
 };

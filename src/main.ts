@@ -1,18 +1,6 @@
 import * as sampleText from "./data/standardized_text.json";
-import {
-	HorizontalDirection,
-	IdType,
-	Label,
-	Row,
-	Tiebreaker,
-	VerticalDirection,
-} from "./lib/types";
+import { BELOW, FIRST, LABEL, LEFT, Label, RIGHT, ROW, Row } from "./lib/types";
 import ValueExtractor from "./lib/value-extractor";
-
-const { LABEL, ROW } = IdType;
-const { RIGHT, LEFT } = HorizontalDirection;
-const { BELOW } = VerticalDirection;
-const { FIRST } = Tiebreaker;
 
 const extractor = new ValueExtractor(sampleText);
 const labelInput: Label = {

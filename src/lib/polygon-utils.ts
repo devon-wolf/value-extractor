@@ -1,36 +1,34 @@
 import {
+	ABOVE,
+	BELOW,
 	Direction,
-	HorizontalDirection,
+	LEFT,
 	Label,
 	Polygon,
+	RIGHT,
 	Row,
-	VerticalDirection,
 } from "./types";
 
-const { RIGHT, LEFT } = HorizontalDirection;
-const { ABOVE, BELOW } = VerticalDirection;
-
-export function alignsWithAnchor(
+export function isInTargetRange(
 	polygon: Polygon,
 	anchor: Polygon,
 	configuration: Label | Row,
-) {
-	if (configuration.position === ABOVE || configuration.position === BELOW) {
-		return alignsWithHorizontalAnchorPoint(
-			polygon,
-			getAnchorEdge(anchor, configuration.textAlignment),
-		);
-	}
-	return alignsVerticallyWithAnchor(polygon, anchor);
+): boolean {
+	const { position } = configuration;
+	return (
+		isOnTargetSideOfAnchor(
+			getAdjacentEdge(polygon, position),
+			getAnchorEdge(anchor, position),
+			configuration.position,
+		) && alignsWithAnchor(polygon, anchor, configuration)
+	);
 }
 
 export function isCloserToAnchorThanPrev(
-	current: Polygon,
-	prev: Polygon,
+	currentEdge: number,
+	prevEdge: number,
 	position: Direction,
 ): boolean {
-	const currentEdge = getAdjacentEdge(current, position);
-	const prevEdge = getAdjacentEdge(prev, position);
 	switch (position) {
 		case RIGHT:
 			return currentEdge < prevEdge;
@@ -40,23 +38,6 @@ export function isCloserToAnchorThanPrev(
 			return currentEdge < prevEdge;
 		case ABOVE:
 			return currentEdge > prevEdge;
-	}
-}
-
-export function isOnTargetSideOfAnchor(
-	lineEdge: number,
-	anchorEdge: number,
-	position: Direction,
-): boolean {
-	switch (position) {
-		case RIGHT:
-			return lineEdge >= anchorEdge;
-		case LEFT:
-			return lineEdge <= anchorEdge;
-		case BELOW:
-			return lineEdge >= anchorEdge;
-		case ABOVE:
-			return lineEdge <= anchorEdge;
 	}
 }
 
@@ -83,6 +64,37 @@ export function getAdjacentEdge(polygon: Polygon, position: Direction): number {
 			return getTopPoint(polygon);
 		case ABOVE:
 			return getBottomPoint(polygon);
+	}
+}
+
+function alignsWithAnchor(
+	polygon: Polygon,
+	anchor: Polygon,
+	configuration: Label | Row,
+) {
+	if (configuration.position === ABOVE || configuration.position === BELOW) {
+		return alignsWithHorizontalAnchorPoint(
+			polygon,
+			getAnchorEdge(anchor, configuration.textAlignment),
+		);
+	}
+	return alignsVerticallyWithAnchor(polygon, anchor);
+}
+
+function isOnTargetSideOfAnchor(
+	lineEdge: number,
+	anchorEdge: number,
+	position: Direction,
+): boolean {
+	switch (position) {
+		case RIGHT:
+			return lineEdge >= anchorEdge;
+		case LEFT:
+			return lineEdge <= anchorEdge;
+		case BELOW:
+			return lineEdge >= anchorEdge;
+		case ABOVE:
+			return lineEdge <= anchorEdge;
 	}
 }
 
